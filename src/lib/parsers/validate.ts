@@ -9,16 +9,13 @@ function isValidDate(value: string): boolean {
 }
 
 /**
- * Required fields per spec: name, address, lat, lng, sale_date. Missing
- * sale_date is rejected the same way as any other missing required field —
- * it is not optional at intake, even though the DB column stays nullable.
+ * Required fields: address, lat, lng, sale_date. building_name is optional.
+ * Missing sale_date is rejected the same way as any other missing required
+ * field — it is not optional at intake, even though the DB column stays nullable.
  */
 export function validateRow(row: RawImportRow): ValidatedRow {
   const errors: RowError[] = [];
 
-  if (!row.building_name || !row.building_name.trim()) {
-    errors.push({ field: 'building_name', message: 'Missing building name' });
-  }
   if (!row.address || !row.address.trim()) {
     errors.push({ field: 'address', message: 'Missing address' });
   }

@@ -139,10 +139,10 @@ export function DataIntakeScreen({ existingProperties, onImported, onGoToWorkspa
         </div>
         <h1 style={{ margin: '0 0 6px' }}>Load property dataset</h1>
         <p style={{ margin: 0, maxWidth: 640, color: 'var(--color-fg)' }}>
-          Upload a CSV, XLSX, or GeoJSON file of properties. Every row needs a name, address,
-          coordinates, and sale date before it can be added — sale date is required for
-          auto-numbering. Rows matching an existing property by address are reviewed before
-          anything is overwritten.
+          Upload a CSV, XLSX, or GeoJSON file of properties. Every row needs an address,
+          coordinates, and sale date before it can be added — building name is optional.
+          Sale date is required for auto-numbering. Rows matching an existing property by
+          address are reviewed before anything is overwritten.
         </p>
       </div>
 

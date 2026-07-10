@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { parseCsv } from './csvParser';
 import { parseGeoJson } from './geojsonParser';
 import { parseXlsx } from './xlsxParser';
-import { validateRows } from './validate';
+import { validateRow, validateRows } from './validate';
 
 const FIXTURE_DIR = resolve(__dirname, '../../../public/sample-data');
 
@@ -50,5 +50,19 @@ describe('Phase 1 checkpoint: sample-properties fixtures', () => {
     const validated = validateRows(rows);
     expect(validated.filter((r) => !r.isValid)).toHaveLength(2);
     expect(validated.filter((r) => r.isValid)).toHaveLength(18);
+  });
+});
+
+describe('validateRow', () => {
+  it('accepts rows with missing building name when other required fields are present', () => {
+    const result = validateRow({
+      building_name: '',
+      address: '100 King St W',
+      lat: 43.65,
+      lng: -79.38,
+      sale_date: '2025-01-15',
+    });
+    expect(result.isValid).toBe(true);
+    expect(result.errors).toHaveLength(0);
   });
 });
