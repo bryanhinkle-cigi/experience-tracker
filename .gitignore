@@ -12,6 +12,8 @@ dist
 dist-ssr
 *.local
 .claude
+supabase
+
 
 # Editor directories and files
 .vscode/*
