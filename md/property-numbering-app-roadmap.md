@@ -21,7 +21,9 @@ Each phase ends in a checkpoint — a concrete, testable state. Don't move to th
 - Build CSV parser (PapaParse) → normalized row objects
 - Build XLSX parser (SheetJS) → normalized row objects
 - Build GeoJSON parser (native) → normalized row objects, pulling from Point feature properties
-- Validation layer: required fields = name, address, lat, lng, **sale_date**. Reject rows missing any.
+- Validation layer: required fields = **address, lat, lng, sale_date**. `building_name` is optional (stored as `null` when blank). Reject rows missing any required field.
+- Column aliases accepted at parse time: `lng` / `long` / `lon` / `longitude` for longitude; `lat` / `latitude` for latitude (common in geocoded XLSX exports)
+- XLSX date cells: Excel serial numbers and JS `Date` objects are normalized to `YYYY-MM-DD` strings before validation
 - Preview table UI: show parsed rows, flag row-level errors (missing field, bad date format, bad lat/lng)
 - Confirm step → bulk insert to Supabase
 - Render inserted points on map as a symbol layer
@@ -68,13 +70,15 @@ Each phase ends in a checkpoint — a concrete, testable state. Don't move to th
 ## Phase 5 — Export
 
 - "Export" button, disabled if bounds box is empty
-- Fetch Mapbox Static Images API for bounds-box extent at 2x/3x scale
-- pdf-lib: construct PDF sized to Letter/Tabloid dimensions, place basemap image
-- pdf-lib: draw vector text objects for each number label, vector point markers, positioned via projected lat/lng → PDF coordinate math
+- **WYSIWYG basemap capture:** crop the live Mapbox canvas to the print-bounds overlay rect (after briefly hiding the property-marker layers so they aren't duplicated in the raster). This preserves the user's current satellite/standard basemap choice and map-label visibility toggles — something the Static Images API cannot do from a bare style URL alone.
+- pdf-lib: construct PDF sized to Letter/Tabloid dimensions, place captured basemap image
+- pdf-lib: draw vector text objects for each number label (Helvetica Bold standard font), vector point markers, positioned via projected lat/lng → PDF coordinate math
 - Auto-download on completion
 - Verify output PDF: numbers/points are selectable/editable text objects (open in Acrobat or Illustrator, confirm not flattened)
 
-**Checkpoint:** Export a bounds box with 10 numbered properties. Resulting PDF matches Letter or Tabloid dimensions exactly. Open in Illustrator — confirm each number is an editable text object, not a raster label. Basemap image is sharp at print resolution (no visible tile pixelation).
+**Known limitation (as of current build):** basemap resolution is tied to the on-screen print-bounds box size × device pixel ratio (typically ~700–1000 px on the long edge at default box scale), then upscaled to the PDF page. Vector markers/labels remain sharp; the basemap may look soft when printed or zoomed in Illustrator. The original Static Images API path (~1280 px base, `@2x` → ~2560 px) was retired in favor of WYSIWYG fidelity.
+
+**Checkpoint:** Export a bounds box with 10 numbered properties. Resulting PDF matches Letter or Tabloid dimensions exactly. Open in Illustrator — confirm each number is an editable text object, not a raster label. Toggle satellite on and POI labels off before export — PDF basemap matches those choices. Basemap is acceptably sharp on screen; may show tile pixelation at high print zoom (known limitation above).
 
 ---
 

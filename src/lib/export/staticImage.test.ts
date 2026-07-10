@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildStaticImageUrl } from './staticImage';
+import { buildStaticImageUrl, detectImageFormat, tryParseMapboxError } from './staticImage';
 
 describe('buildStaticImageUrl', () => {
   it('does not append a .{format} suffix — the styles/v1/.../static/ endpoint 404s on it', () => {
@@ -27,5 +27,32 @@ describe('buildStaticImageUrl', () => {
     });
     expect(url).not.toContain('@2x');
     expect(url).toContain('/600x400?access_token=pk.test');
+  });
+
+  it('builds URL for satellite-streets style', () => {
+    const url = buildStaticImageUrl({
+      bbox: { minLng: -122.4, minLat: 37.7, maxLng: -122.3, maxLat: 37.8 },
+      widthPx: 800,
+      heightPx: 600,
+      scale: 2,
+      mapboxToken: 'pk.test',
+      mapboxStyleUrl: 'mapbox://styles/mapbox/satellite-streets-v12',
+    });
+    expect(url).toContain('/styles/v1/mapbox/satellite-streets-v12/');
+  });
+});
+
+describe('static image helpers', () => {
+  it('detects PNG and JPEG magic bytes', () => {
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    const jpg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0]);
+    expect(detectImageFormat(png)).toBe('png');
+    expect(detectImageFormat(jpg)).toBe('jpg');
+    expect(detectImageFormat(new Uint8Array([1, 2, 3]))).toBeNull();
+  });
+
+  it('parses Mapbox JSON error bodies', () => {
+    const bytes = new TextEncoder().encode('{"message":"Width must be between 1-1280."}');
+    expect(tryParseMapboxError(bytes)).toBe('Width must be between 1-1280.');
   });
 });

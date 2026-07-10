@@ -10,6 +10,26 @@ function styleUrlToPath(styleUrl: string): string {
   return `${match[1]}/${match[2]}`;
 }
 
+export function detectImageFormat(bytes: Uint8Array): 'png' | 'jpg' | null {
+  if (bytes.byteLength >= 8 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) {
+    return 'png';
+  }
+  if (bytes.byteLength >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
+    return 'jpg';
+  }
+  return null;
+}
+
+export function tryParseMapboxError(bytes: Uint8Array): string | null {
+  try {
+    const text = new TextDecoder().decode(bytes.slice(0, 1000));
+    const json = JSON.parse(text) as { message?: string };
+    return json.message ?? null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Uses the Static Images API's [bbox] syntax (rather than center/zoom) so the
  * fetched raster's extent exactly matches the print-bounds box's geographic
@@ -38,9 +58,21 @@ export function buildStaticImageUrl(params: {
 
 export async function fetchStaticImageBytes(url: string): Promise<Uint8Array> {
   const res = await fetch(url);
+  const bytes = new Uint8Array(await res.arrayBuffer());
+
   if (!res.ok) {
-    throw new Error(`Mapbox Static Images API request failed: ${res.status} ${res.statusText}`);
+    const mapboxMessage = tryParseMapboxError(bytes);
+    throw new Error(
+      mapboxMessage
+        ? `Mapbox Static Images API: ${mapboxMessage}`
+        : `Mapbox Static Images API request failed: ${res.status} ${res.statusText}`,
+    );
   }
-  const buffer = await res.arrayBuffer();
-  return new Uint8Array(buffer);
+
+  if (!detectImageFormat(bytes)) {
+    const mapboxMessage = tryParseMapboxError(bytes);
+    throw new Error(mapboxMessage ?? 'Mapbox returned a non-image response for the basemap');
+  }
+
+  return bytes;
 }

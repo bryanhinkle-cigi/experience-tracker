@@ -1,10 +1,15 @@
 import { useEffect, useRef } from 'react';
 import type { Map as MapboxMap, GeoJSONSource } from 'mapbox-gl';
 import type { PropertyRow } from '../../lib/supabase/types';
+import {
+  PROPERTY_MARKERS_CIRCLE_LAYER_ID,
+  PROPERTY_MARKERS_NUMBER_LAYER_ID,
+  PROPERTY_MARKERS_SOURCE_ID,
+} from '../../lib/map/propertyMarkerLayers';
 
-const SOURCE_ID = 'properties-source';
-const CIRCLE_LAYER_ID = 'properties-circle-layer';
-const NUMBER_LABEL_LAYER_ID = 'properties-number-label-layer';
+const SOURCE_ID = PROPERTY_MARKERS_SOURCE_ID;
+const CIRCLE_LAYER_ID = PROPERTY_MARKERS_CIRCLE_LAYER_ID;
+const NUMBER_LABEL_LAYER_ID = PROPERTY_MARKERS_NUMBER_LAYER_ID;
 
 // Muted color for out-of-bounds pins is a fixed constant (not user-configurable) —
 // markerColor is the single "active/in-bounds" color the size/color settings panel

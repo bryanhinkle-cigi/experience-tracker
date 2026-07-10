@@ -1,8 +1,7 @@
-import { PDFDocument, rgb } from 'pdf-lib';
-import fontkit from '@pdf-lib/fontkit';
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { PAPER_SIZE_PT, type GeoBbox, type PaperSize } from '../../types/domain';
 import { latLngToPdfPoint } from './projection';
-import { buildStaticImageUrl, fetchStaticImageBytes } from './staticImage';
+import { detectImageFormat } from './staticImage';
 
 export interface ExportableProperty {
   lat: number;
@@ -14,41 +13,41 @@ export interface BuildExportPdfParams {
   properties: ExportableProperty[];
   bbox: GeoBbox;
   paper: PaperSize;
-  mapboxToken: string;
-  mapboxStyleUrl: string;
+  basemapBytes: Uint8Array;
   onStep?: (step: 'fetching-basemap' | 'placing-points' | 'writing-vector-layer') => void;
 }
 
-// Static Images API's max base request size, before @2x/@3x scaling.
-const STATIC_IMAGE_MAX_BASE_PX = 1280;
+export function exportErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === 'string') return err;
+  return 'Export failed';
+}
+
+async function embedBasemapImage(doc: PDFDocument, bytes: Uint8Array) {
+  const format = detectImageFormat(bytes);
+  try {
+    if (format === 'png') return await doc.embedPng(bytes);
+    if (format === 'jpg') return await doc.embedJpg(bytes);
+    throw new Error('Unsupported basemap image format');
+  } catch (err) {
+    if (typeof err === 'string') throw new Error(err);
+    throw err;
+  }
+}
 
 export async function buildExportPdf(params: BuildExportPdfParams): Promise<Uint8Array> {
-  const { properties, bbox, paper, mapboxToken, mapboxStyleUrl, onStep } = params;
+  const { properties, bbox, paper, basemapBytes, onStep } = params;
   const { width: pageWidthPt, height: pageHeightPt } = PAPER_SIZE_PT[paper];
 
   onStep?.('fetching-basemap');
-  const ratio = pageWidthPt / pageHeightPt;
-  const widthPx = ratio >= 1 ? STATIC_IMAGE_MAX_BASE_PX : Math.round(STATIC_IMAGE_MAX_BASE_PX * ratio);
-  const heightPx = ratio >= 1 ? Math.round(STATIC_IMAGE_MAX_BASE_PX / ratio) : STATIC_IMAGE_MAX_BASE_PX;
-  const imageUrl = buildStaticImageUrl({
-    bbox,
-    widthPx,
-    heightPx,
-    scale: 2,
-    mapboxToken,
-    mapboxStyleUrl,
-  });
-  const imageBytes = await fetchStaticImageBytes(imageUrl);
 
   const doc = await PDFDocument.create();
-  doc.registerFontkit(fontkit);
   const page = doc.addPage([pageWidthPt, pageHeightPt]);
 
-  const image = await doc.embedPng(imageBytes);
+  const image = await embedBasemapImage(doc, basemapBytes);
   page.drawImage(image, { x: 0, y: 0, width: pageWidthPt, height: pageHeightPt });
 
-  const fontBytes = await fetch('/fonts/OpenSans-Bold.ttf').then((r) => r.arrayBuffer());
-  const font = await doc.embedFont(fontBytes);
+  const font = await doc.embedFont(StandardFonts.HelveticaBold);
 
   onStep?.('placing-points');
   const markerRadius = 9;
@@ -79,7 +78,7 @@ export async function buildExportPdf(params: BuildExportPdfParams): Promise<Uint
 }
 
 export function downloadPdf(bytes: Uint8Array, filename: string) {
-  const blob = new Blob([bytes.buffer as ArrayBuffer], { type: 'application/pdf' });
+  const blob = new Blob([bytes.slice()], { type: 'application/pdf' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

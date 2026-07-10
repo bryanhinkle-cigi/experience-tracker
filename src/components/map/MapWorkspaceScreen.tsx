@@ -6,8 +6,8 @@ import { useRenumber } from '../../hooks/useRenumber';
 import { useMapLabelVisibility } from '../../hooks/useMapLabelVisibility';
 import { hasManualOverride } from '../../lib/numbering/numbering';
 import { geoPolygonToBbox } from '../../lib/geometry/boundsToPolygon';
-import { buildExportPdf, downloadPdf } from '../../lib/export/pdfExport';
-import { config } from '../../config/env';
+import { capturePrintBoundsBasemap } from '../../lib/export/captureBasemap';
+import { buildExportPdf, downloadPdf, exportErrorMessage } from '../../lib/export/pdfExport';
 import { MAP_STYLE_URLS, type MapStyleMode } from '../../lib/map/mapStyles';
 import type { PropertyRow } from '../../lib/supabase/types';
 import type { OrderAssignment } from '../../lib/numbering/numbering';
@@ -61,22 +61,22 @@ export function MapWorkspaceScreen({ properties, onApplyOrderUpdates }: MapWorks
   }, [map, mapStyleMode]);
 
   async function handleExportClick() {
-    if (!boundsPolygon || listRows.length === 0) return;
+    if (!map || !boundsPolygon || listRows.length === 0) return;
     setExportState({ status: 'running', step: 'fetching-basemap' });
     try {
       const bbox = geoPolygonToBbox(boundsPolygon);
+      const basemapBytes = await capturePrintBoundsBasemap(map, rect);
       const bytes = await buildExportPdf({
         properties: listRows.map((r) => ({ lat: r.lat, lng: r.lng, current_number: r.current_number ?? 0 })),
         bbox,
         paper,
-        mapboxToken: config.mapboxToken,
-        mapboxStyleUrl: config.mapboxStyleUrl,
+        basemapBytes,
         onStep: (step) => setExportState({ status: 'running', step }),
       });
       downloadPdf(bytes, `property-map-${paper}.pdf`);
       setExportState({ status: 'done' });
     } catch (err) {
-      setExportState({ status: 'error', message: err instanceof Error ? err.message : 'Export failed' });
+      setExportState({ status: 'error', message: exportErrorMessage(err) });
     }
   }
 
