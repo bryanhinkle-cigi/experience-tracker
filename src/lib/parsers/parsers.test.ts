@@ -66,3 +66,21 @@ describe('validateRow', () => {
     expect(result.errors).toHaveLength(0);
   });
 });
+
+describe('geocoded XLSX export', () => {
+  it('reads long column and Excel serial sale dates', async () => {
+    const buffer = readFileSync(resolve(__dirname, '../../../data/test-geocode-geocoded.xlsx'));
+    const file = new File([buffer], 'test-geocode-geocoded.xlsx', {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const rows = await parseXlsx(file);
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows[0].lng).toBeCloseTo(-122.3930975, 4);
+    expect(rows[0].lat).toBeCloseTo(37.7793221, 4);
+    expect(rows[0].sale_date).toBe('2026-07-01');
+
+    const validated = validateRows(rows);
+    expect(validated.filter((r) => r.isValid)).toHaveLength(236);
+    expect(validated.filter((r) => !r.isValid)).toHaveLength(58);
+  });
+});

@@ -39,7 +39,7 @@ function AppShell() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', fontFamily: 'var(--font-sans)', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ height: '100vh', overflow: 'hidden', fontFamily: 'var(--font-sans)', display: 'flex', flexDirection: 'column' }}>
       <Header screen={screen} onNavigate={setScreen} propertyCount={properties.length} />
       {screen === 'intake' && (
         <DataIntakeScreen

@@ -33,7 +33,13 @@ export function useMapInstance() {
       setMap(instance);
     });
 
+    const resizeObserver = new ResizeObserver(() => {
+      instance.resize();
+    });
+    resizeObserver.observe(containerRef.current);
+
     return () => {
+      resizeObserver.disconnect();
       instance.off('movestart', onMoveStart);
       instance.off('moveend', onMoveEnd);
       instance.remove();

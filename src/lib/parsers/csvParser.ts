@@ -20,8 +20,8 @@ export async function parseCsv(file: File): Promise<RawImportRow[]> {
     (r): RawImportRow => ({
       building_name: r.building_name ?? '',
       address: r.address ?? '',
-      lat: toNumberOrNull(r.lat),
-      lng: toNumberOrNull(r.lng),
+      lat: toNumberOrNull(r.lat ?? r.latitude),
+      lng: toNumberOrNull(r.lng ?? r.long ?? r.lon ?? r.longitude),
       sale_date: r.sale_date ?? '',
     }),
   );

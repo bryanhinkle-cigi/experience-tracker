@@ -49,7 +49,7 @@ export function PropertyListPanel({ listRows, onDragEnd, onExportClick }: Proper
           Drag rows to reorder — list order sets the final number
         </div>
       </div>
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
         <DndContext sensors={sensors} onDragEnd={onDragEnd}>
           <SortableContext items={listRows.map((r) => r.id)} strategy={verticalListSortingStrategy}>
             {listRows.map((row) => (
