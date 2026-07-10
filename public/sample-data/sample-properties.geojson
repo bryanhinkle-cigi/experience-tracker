@@ -1,0 +1,305 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -79.381,
+          43.6495
+        ]
+      },
+      "properties": {
+        "building_name": "Bay Adelaide East",
+        "address": "22 Adelaide St W",
+        "sale_date": "2025-11-04"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -79.3806,
+          43.6483
+        ]
+      },
+      "properties": {
+        "building_name": "First Canadian Place",
+        "address": "100 King St W",
+        "sale_date": "2025-09-18"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -79.3801,
+          43.6488
+        ]
+      },
+      "properties": {
+        "building_name": "Scotia Plaza",
+        "address": "40 King St W",
+        "sale_date": "2024-06-30"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -79.3789,
+          43.6478
+        ]
+      },
+      "properties": {
+        "building_name": "Commerce Court",
+        "address": "199 Bay St",
+        "sale_date": "2025-02-11"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -79.3815,
+          43.6473
+        ]
+      },
+      "properties": {
+        "building_name": "TD Centre",
+        "address": "66 Wellington St W",
+        "sale_date": "2025-05-22"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -79.3781,
+          43.6474
+        ]
+      },
+      "properties": {
+        "building_name": "Brookfield Place",
+        "address": "181 Bay St",
+        "sale_date": "2023-12-01"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -79.3849,
+          43.6467
+        ]
+      },
+      "properties": {
+        "building_name": "RBC Centre",
+        "address": "155 Wellington St W",
+        "sale_date": "2024-08-14"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -79.3785,
+          43.6462
+        ]
+      },
+      "properties": {
+        "building_name": "Royal Bank Plaza",
+        "address": "200 Bay St",
+        "sale_date": "2025-07-03"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -79.383,
+          43.648
+        ]
+      },
+      "properties": {
+        "building_name": "Exchange Tower",
+        "address": "130 King St W",
+        "sale_date": "2025-01-19"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -79.3839,
+          43.6479
+        ]
+      },
+      "properties": {
+        "building_name": "Sun Life Centre",
+        "address": "150 King St W",
+        "sale_date": "2024-11-27"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -79.3792,
+          43.6469
+        ]
+      },
+      "properties": {
+        "building_name": "Ernst & Young Tower",
+        "address": "222 Bay St",
+        "sale_date": "2025-04-06"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -79.3854,
+          43.6449
+        ]
+      },
+      "properties": {
+        "building_name": "Simcoe Place",
+        "address": "200 Front St W",
+        "sale_date": "2023-09-15"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -79.3812,
+          43.6421
+        ]
+      },
+      "properties": {
+        "building_name": "South Core Tower",
+        "address": "16 York St",
+        "sale_date": "2025-10-02"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -79.3789,
+          43.6425
+        ]
+      },
+      "properties": {
+        "building_name": "Bremner Tower",
+        "address": "10 Bay St",
+        "sale_date": "2024-03-21"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -79.3782,
+          43.6405
+        ]
+      },
+      "properties": {
+        "building_name": "Harbour View Estates",
+        "address": "88 Harbour St",
+        "sale_date": "2025-06-11"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -79.3808,
+          43.6455
+        ]
+      },
+      "properties": {
+        "building_name": "Union Centre",
+        "address": "65 Front St W",
+        "sale_date": "2024-12-05"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -79.3897,
+          43.6462
+        ]
+      },
+      "properties": {
+        "building_name": "Metro Hall Annex",
+        "address": "55 John St",
+        "sale_date": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -79.387,
+          999.0
+        ]
+      },
+      "properties": {
+        "building_name": "Wellington Yards",
+        "address": "220 Wellington St W",
+        "sale_date": "2025-03-30"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -79.3868,
+          43.6503
+        ]
+      },
+      "properties": {
+        "building_name": "Richmond Row",
+        "address": "150 Richmond St W",
+        "sale_date": "2025-08-09"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -79.3778,
+          43.6412
+        ]
+      },
+      "properties": {
+        "building_name": "Peel Block",
+        "address": "20 Bay St",
+        "sale_date": "2024-05-17"
+      }
+    }
+  ]
+}

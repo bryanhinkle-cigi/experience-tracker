@@ -1,0 +1,15 @@
+/// <reference types="vite/client" />
+
+interface ImportMetaEnv {
+  readonly VITE_MAPBOX_TOKEN: string;
+  readonly VITE_MAPBOX_STYLE_URL: string;
+  readonly VITE_SUPABASE_URL: string;
+  readonly VITE_SUPABASE_ANON_KEY: string;
+  readonly VITE_DEFAULT_MAP_CENTER_LNG: string;
+  readonly VITE_DEFAULT_MAP_CENTER_LAT: string;
+  readonly VITE_DEFAULT_MAP_ZOOM: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}

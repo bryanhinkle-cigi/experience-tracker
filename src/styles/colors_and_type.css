@@ -1,0 +1,281 @@
+/*
+ * Colliers Design System — Colors & Typography
+ * Source: Colliers Visual Identity Guidelines
+ * Fonts: Open Sans + Merriweather via Google Fonts
+ * Ported from Claude Design project "Colliers app prototype design"
+ */
+
+/* @import must precede all other rules (besides @charset) per the CSS spec. */
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400&display=swap');
+
+/* ─── Open Sans — Local brand fonts ────────────────── */
+@font-face { font-family: "Open Sans"; src: url("/fonts/OpenSans-Light.ttf") format("truetype"); font-weight: 300; font-style: normal; }
+@font-face { font-family: "Open Sans"; src: url("/fonts/OpenSans-LightItalic.ttf") format("truetype"); font-weight: 300; font-style: italic; }
+@font-face { font-family: "Open Sans"; src: url("/fonts/OpenSans-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; }
+@font-face { font-family: "Open Sans"; src: url("/fonts/OpenSans-RegularItalic.ttf") format("truetype"); font-weight: 400; font-style: italic; }
+@font-face { font-family: "Open Sans"; src: url("/fonts/OpenSans-SemiBold.ttf") format("truetype"); font-weight: 600; font-style: normal; }
+@font-face { font-family: "Open Sans"; src: url("/fonts/OpenSans-SemiBoldItalic.ttf") format("truetype"); font-weight: 600; font-style: italic; }
+@font-face { font-family: "Open Sans"; src: url("/fonts/OpenSans-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; }
+@font-face { font-family: "Open Sans"; src: url("/fonts/OpenSans-BoldItalic.ttf") format("truetype"); font-weight: 700; font-style: italic; }
+@font-face { font-family: "Open Sans"; src: url("/fonts/OpenSans-ExtraBold.ttf") format("truetype"); font-weight: 800; font-style: normal; }
+@font-face { font-family: "Open Sans"; src: url("/fonts/OpenSans-ExtraBoldItalic.ttf") format("truetype"); font-weight: 800; font-style: italic; }
+
+/* Open Sans Condensed */
+@font-face { font-family: "Open Sans Condensed"; src: url("/fonts/OpenSansCondensed_Light.ttf") format("truetype"); font-weight: 300; font-style: normal; }
+@font-face { font-family: "Open Sans Condensed"; src: url("/fonts/OpenSansCondensed_LightItalic.ttf") format("truetype"); font-weight: 300; font-style: italic; }
+@font-face { font-family: "Open Sans Condensed"; src: url("/fonts/OpenSansCondensed_Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; }
+
+/* ─── Base Color Tokens ─────────────────────────────── */
+:root {
+  /* Primary Palette — Blues */
+  --color-deep-blue:        #000759;
+  --color-dark-blue:        #25408F;
+  --color-medium-blue:      #1C54F4;
+  --color-light-blue:       #4D93FF;
+  --color-pale-blue:        #C3E6FF;
+  --color-white:            #FFFFFF;
+
+  /* Primary Tints — Deep Blue */
+  --color-deep-blue-80:     rgba(0, 7, 89, 0.80);
+  --color-deep-blue-60:     rgba(0, 7, 89, 0.60);
+  --color-deep-blue-40:     rgba(0, 7, 89, 0.40);
+  --color-deep-blue-20:     rgba(0, 7, 89, 0.20);
+  --color-deep-blue-10:     rgba(0, 7, 89, 0.10);
+
+  /* Secondary Palette — Blue Greys */
+  --color-deep-blue-grey:   #353E59;
+  --color-dark-blue-grey:   #56648F;
+  --color-medium-blue-grey: #7B8BBD;
+  --color-light-blue-grey:  #ACBBE8;
+  --color-pale-blue-grey:   #DBE5FF;
+
+  /* Tertiary Palette — Accents (use sparingly) */
+  --color-red:              #ED1B34;
+  --color-yellow:           #FFD400;
+  --color-colliers-lb:      #0C9ED9;
+  --color-orange:           #FA6609;
+  --color-purple:           #9C45AE;
+  --color-teal:             #2AB6A9;
+  --color-cool-grey:        #CCCDD5;
+
+  /* ─── Semantic Color Tokens ───────────────────────── */
+  --color-bg:               var(--color-white);
+  --color-bg-subtle:        var(--color-pale-blue-grey);
+  --color-bg-dark:          var(--color-dark-blue);
+  --color-bg-darkest:       var(--color-deep-blue);
+
+  --color-fg:               var(--color-deep-blue-grey);
+  --color-fg-strong:        var(--color-deep-blue);
+  --color-fg-muted:         var(--color-medium-blue-grey);
+  --color-fg-on-dark:       var(--color-white);
+
+  --color-brand-primary:    var(--color-dark-blue);
+  --color-brand-accent:     var(--color-medium-blue);
+  --color-brand-highlight:  var(--color-medium-blue);
+
+  --color-border:           var(--color-light-blue-grey);
+  --color-border-strong:    var(--color-dark-blue);
+
+  --color-link:             var(--color-medium-blue);
+  --color-link-hover:       var(--color-dark-blue);
+
+  --color-focus:            var(--color-medium-blue);
+
+  /* Block colors (primary blues only per brand rules) */
+  --color-block-primary:    var(--color-dark-blue);
+  --color-block-secondary:  var(--color-deep-blue);
+  --color-block-accent:     var(--color-medium-blue);
+
+  /* ─── Typography Tokens ──────────────────────────── */
+  --font-sans:    "Open Sans", Verdana, sans-serif;
+  --font-serif:   "Merriweather", Georgia, serif;
+
+  /* Weights */
+  --fw-light:     300;
+  --fw-regular:   400;
+  --fw-semibold:  600;
+  --fw-bold:      700;
+
+  /* Scale */
+  --text-xs:   0.75rem;   /* 12px */
+  --text-sm:   0.875rem;  /* 14px */
+  --text-base: 1rem;      /* 16px */
+  --text-md:   1.125rem;  /* 18px */
+  --text-lg:   1.25rem;   /* 20px */
+  --text-xl:   1.5rem;    /* 24px */
+  --text-2xl:  2rem;      /* 32px */
+  --text-3xl:  2.5rem;    /* 40px */
+  --text-4xl:  3rem;      /* 48px */
+  --text-5xl:  3.75rem;   /* 60px */
+
+  /* Line heights */
+  --lh-tight:   1.2;
+  --lh-snug:    1.35;
+  --lh-base:    1.6;
+  --lh-relaxed: 1.75;
+
+  /* Letter spacing */
+  --ls-tight:   -0.01em;
+  --ls-normal:   0;
+  --ls-wide:     0.05em;
+  --ls-wider:    0.08em;
+  --ls-caps:     0.1em;   /* for all-caps labels/headings */
+
+  /* ─── Spacing Tokens ─────────────────────────────── */
+  --space-1:  0.25rem;   /*  4px */
+  --space-2:  0.5rem;    /*  8px */
+  --space-3:  0.75rem;   /* 12px */
+  --space-4:  1rem;      /* 16px */
+  --space-5:  1.25rem;   /* 20px */
+  --space-6:  1.5rem;    /* 24px */
+  --space-8:  2rem;      /* 32px */
+  --space-10: 2.5rem;    /* 40px */
+  --space-12: 3rem;      /* 48px */
+  --space-16: 4rem;      /* 64px */
+  --space-20: 5rem;      /* 80px */
+  --space-24: 6rem;      /* 96px */
+
+  /* ─── Border Radius ──────────────────────────────── */
+  --radius-sm:  4px;
+  --radius-md:  6px;
+  --radius-lg:  10px;    /* approx match to logo rounded corner */
+  --radius-xl:  16px;
+  --radius-full: 9999px;
+
+  /* ─── Shadows ────────────────────────────────────── */
+  --shadow-sm:  0 1px 3px rgba(0,7,89,0.08), 0 1px 2px rgba(0,7,89,0.06);
+  --shadow-md:  0 4px 12px rgba(0,7,89,0.10), 0 2px 4px rgba(0,7,89,0.06);
+  --shadow-lg:  0 8px 24px rgba(0,7,89,0.12), 0 4px 8px rgba(0,7,89,0.08);
+  --shadow-xl:  0 16px 48px rgba(0,7,89,0.16), 0 8px 16px rgba(0,7,89,0.10);
+
+  /* Keyline gradient (brand spec) */
+  --gradient-keyline: linear-gradient(90deg, var(--color-dark-blue) 0%, var(--color-pale-blue-grey) 50%, var(--color-dark-blue) 100%);
+  --gradient-hero:    linear-gradient(135deg, var(--color-deep-blue) 0%, var(--color-dark-blue) 60%, var(--color-medium-blue) 100%);
+}
+
+/* ─── Semantic Type Styles ──────────────────────────── */
+
+/* Document / Section Heading */
+.type-label,
+.t-label {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-bold);
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  letter-spacing: var(--ls-caps);
+  line-height: var(--lh-tight);
+  color: var(--color-fg-strong);
+}
+
+/* Headline — large, light weight */
+h1, .t-h1 {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-light);
+  font-size: var(--text-4xl);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+  color: var(--color-deep-blue);
+}
+
+h2, .t-h2 {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-light);
+  font-size: var(--text-3xl);
+  line-height: var(--lh-tight);
+  color: var(--color-deep-blue);
+}
+
+h3, .t-h3 {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-semibold);
+  font-size: var(--text-xl);
+  line-height: var(--lh-snug);
+  color: var(--color-deep-blue);
+}
+
+/* Subhead — Merriweather */
+.t-subhead {
+  font-family: var(--font-serif);
+  font-weight: var(--fw-regular);
+  font-size: var(--text-lg);
+  line-height: var(--lh-snug);
+  color: var(--color-deep-blue-grey);
+}
+
+/* Pull quote */
+.t-quote {
+  font-family: var(--font-serif);
+  font-weight: var(--fw-light);
+  font-size: var(--text-2xl);
+  line-height: var(--lh-snug);
+  font-style: italic;
+  color: var(--color-dark-blue);
+}
+
+/* Body copy */
+p, .t-body {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-regular);
+  font-size: var(--text-base);
+  line-height: var(--lh-base);
+  color: var(--color-fg);
+}
+
+/* Body CTA / emphasis */
+.t-body-cta {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-bold);
+  font-size: var(--text-base);
+  line-height: var(--lh-base);
+  color: var(--color-deep-blue);
+}
+
+/* Legal / footnote */
+.t-legal {
+  font-family: "Open Sans Condensed", var(--font-sans);
+  font-weight: var(--fw-light);
+  font-size: var(--text-xs);
+  line-height: var(--lh-relaxed);
+  color: var(--color-fg-muted);
+}
+
+/* Tagline */
+.t-tagline {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-regular);
+  font-size: var(--text-base);
+  letter-spacing: 0.01em;
+  color: var(--color-fg-strong);
+}
+
+/* Table / chart labels */
+.t-table {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-regular);
+  font-size: 0.5625rem; /* 9pt */
+  line-height: var(--lh-base);
+  color: var(--color-dark-blue);
+}
+
+.t-table-header {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-bold);
+  font-size: 0.5625rem;
+  text-transform: uppercase;
+  letter-spacing: var(--ls-caps);
+  color: var(--color-white);
+  background: var(--color-dark-blue);
+}
+
+/* Highlight treatment (brand spec — blue bg, white text) */
+.t-highlight {
+  background: var(--color-medium-blue);
+  color: var(--color-white);
+  padding: 0 0.2em;
+  border-radius: var(--radius-sm);
+}
+
+/* Colour emphasis */
+.t-emphasis {
+  color: var(--color-medium-blue);
+}

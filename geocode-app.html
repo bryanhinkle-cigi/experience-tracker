@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>XLSX Geocoder</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; color: #1a1a1a; }
+  h1 { font-size: 1.4rem; }
+  #drop { border: 2px dashed #999; border-radius: 8px; padding: 32px; text-align: center; color: #666; cursor: pointer; }
+  #drop.hover { border-color: #333; color: #333; background: #f5f5f5; }
+  #status { margin-top: 16px; white-space: pre-line; font-size: 0.9rem; }
+  #log { margin-top: 12px; max-height: 260px; overflow-y: auto; font-size: 0.8rem; background: #fafafa; border: 1px solid #eee; padding: 8px; border-radius: 6px; display: none; }
+  progress { width: 100%; height: 10px; margin-top: 12px; }
+  button { margin-top: 16px; padding: 8px 16px; font-size: 0.95rem; cursor: pointer; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+</style>
+</head>
+<body>
+
+<h1>XLSX Geocoder</h1>
+<p>Upload a spreadsheet with <code>address</code>, <code>city</code>, <code>lat</code>, and <code>long</code> columns. Rows that already have lat/long are skipped. Rows that can't be geocoded are left blank.</p>
+
+<div id="drop">Click to choose a .xlsx file, or drag one here</div>
+<input type="file" id="file" accept=".xlsx" style="display:none" />
+
+<div id="status"></div>
+<progress id="progress" value="0" max="1" style="display:none"></progress>
+<div id="log"></div>
+<button id="downloadBtn" style="display:none">Download updated .xlsx</button>
+
+<script>
+const drop = document.getElementById('drop');
+const fileInput = document.getElementById('file');
+const statusEl = document.getElementById('status');
+const logEl = document.getElementById('log');
+const progressEl = document.getElementById('progress');
+const downloadBtn = document.getElementById('downloadBtn');
+
+let workbook = null;
+let sheetName = null;
+let outFilename = 'geocoded.xlsx';
+
+drop.addEventListener('click', () => fileInput.click());
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('hover'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('hover'));
+drop.addEventListener('drop', e => {
+  e.preventDefault();
+  drop.classList.remove('hover');
+  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e => {
+  if (e.target.files.length) handleFile(e.target.files[0]);
+});
+
+function handleFile(file) {
+  outFilename = file.name.replace(/\.xlsx$/i, '') + '-geocoded.xlsx';
+  const reader = new FileReader();
+  reader.onload = e => {
+    const data = new Uint8Array(e.target.result);
+    workbook = XLSX.read(data, { type: 'array', cellDates: true });
+    sheetName = workbook.SheetNames[0];
+    processWorkbook();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function findCol(headerRow, names) {
+  for (let c = 0; c < headerRow.length; c++) {
+    const h = (headerRow[c] || '').toString().trim().toLowerCase();
+    if (names.includes(h)) return c;
+  }
+  return -1;
+}
+
+async function processWorkbook() {
+  const ws = workbook.Sheets[sheetName];
+  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '' });
+  if (!rows.length) { statusEl.textContent = 'Sheet is empty.'; return; }
+
+  const header = rows[0];
+  const addrCol = findCol(header, ['address']);
+  const cityCol = findCol(header, ['city']);
+  let latCol = findCol(header, ['lat', 'latitude']);
+  let longCol = findCol(header, ['long', 'lng', 'longitude']);
+
+  if (addrCol === -1 || cityCol === -1) {
+    statusEl.textContent = 'Could not find "address" and "city" columns in the header row.';
+    return;
+  }
+  if (latCol === -1) { latCol = header.length; header[latCol] = 'lat'; }
+  if (longCol === -1) { longCol = header.length; header[longCol] = 'long'; }
+
+  const dataRows = rows.slice(1);
+  const toGeocode = dataRows.filter(r => {
+    const lat = r[latCol], lng = r[longCol];
+    return !(lat !== '' && lat != null && lng !== '' && lng != null);
+  });
+
+  drop.style.display = 'none';
+  progressEl.style.display = 'block';
+  progressEl.max = toGeocode.length || 1;
+  progressEl.value = 0;
+  logEl.style.display = 'block';
+  statusEl.textContent = `Geocoding ${toGeocode.length} row(s), skipping ${dataRows.length - toGeocode.length} already-geocoded row(s)...`;
+
+  let ok = 0, failed = 0;
+  for (let i = 0; i < toGeocode.length; i++) {
+    const row = toGeocode[i];
+    const address = (row[addrCol] || '').toString().trim();
+    const city = (row[cityCol] || '').toString().trim();
+
+    if (address && city) {
+      const coords = await geocode(address, city);
+      if (coords) {
+        row[latCol] = coords.lat;
+        row[longCol] = coords.lon;
+        ok++;
+        logLine(`OK  ${address}, ${city} -> ${coords.lat}, ${coords.lon}`);
+      } else {
+        failed++;
+        logLine(`SKIP ${address}, ${city} (no match)`);
+      }
+    } else {
+      failed++;
+      logLine(`SKIP row (missing address or city)`);
+    }
+
+    progressEl.value = i + 1;
+    statusEl.textContent = `Geocoding ${i + 1}/${toGeocode.length}... (${ok} found, ${failed} skipped)`;
+    if (i < toGeocode.length - 1) await sleep(1100); // respect Nominatim's 1 req/sec limit
+  }
+
+  statusEl.textContent = `Done. ${ok} row(s) geocoded, ${failed} row(s) skipped (of ${toGeocode.length} attempted).`;
+
+  const newWs = XLSX.utils.aoa_to_sheet([header, ...dataRows]);
+  workbook.Sheets[sheetName] = newWs;
+  downloadBtn.style.display = 'inline-block';
+}
+
+async function geocode(address, city) {
+  const query = encodeURIComponent(`${address}, ${city}`);
+  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${query}`;
+  try {
+    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    if (!res.ok) return null;
+    const results = await res.json();
+    if (!results.length) return null;
+    return { lat: parseFloat(results[0].lat), lon: parseFloat(results[0].lon) };
+  } catch (err) {
+    return null;
+  }
+}
+
+function logLine(text) {
+  const line = document.createElement('div');
+  line.textContent = text;
+  logEl.appendChild(line);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+downloadBtn.addEventListener('click', () => {
+  XLSX.writeFile(workbook, outFilename);
+});
+</script>
+
+</body>
+</html>
