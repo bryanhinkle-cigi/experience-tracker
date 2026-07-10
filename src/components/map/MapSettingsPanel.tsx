@@ -83,13 +83,14 @@ export function MapSettingsPanel({
         onClick={() => setOpen((o) => !o)}
         title="Map settings"
         style={{
-          width: 32,
-          height: 32,
+          width: 40,
+          height: 40,
           border: 'none',
-          borderRadius: 6,
+          borderRadius: 3,
           background: 'var(--color-white)',
           color: 'var(--color-dark-blue)',
-          fontSize: 15,
+          fontSize: 30,
+          lineHeight:0,
           cursor: 'pointer',
           boxShadow: 'var(--shadow-md)',
         }}

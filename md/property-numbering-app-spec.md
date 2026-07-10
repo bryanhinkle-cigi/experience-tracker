@@ -34,7 +34,7 @@ Map-based tool for numbering properties (1–XX) within a print-ready area, edit
 ## Feature Breakdown
 
 **1) Admin intake (CSV/XLSX/GeoJSON)**
-Upload → parse client-side → validate required fields: **address, lat, lng, sale_date** (`building_name` is optional) → preview table with row-level errors → confirm (or match-review on re-upload) → bulk insert to Supabase.
+Upload → parse client-side → validate required fields: **address, lat, lng, sale_date** (`building_name` is optional) → preview table with row-level errors → confirm (or match-review on re-upload) → bulk insert to Supabase. The Data intake view also shows an **All properties** table (`IntakePropertyTable`) of every loaded record with inline add/edit (same validation rules) and per-row show/hide shared with the map workspace. **Duplicate addresses** (same normalized address, different sale dates — resales) are kept as separate rows; on import completion, older sales are auto-hidden (not deleted) and shaded yellow in the table, leaving the most recent sale visible.
 
 Parser notes:
 - GeoJSON path reads Point features, pulling `building_name`/`name`, `address`, and `sale_date` from feature properties.
@@ -43,7 +43,7 @@ Parser notes:
 - Rows missing `sale_date`, `address`, or valid lat/lng are rejected at validation. Blank `building_name` imports as `null`.
 
 **2) City navigation + synced property list**
-Property list on the right filters live against the **bounds-box polygon** (Feature 3), not the raw map viewport. This keeps the list, the numbering, and the export all scoped to the same set of properties at all times.
+Property list on the right filters live against the **bounds-box polygon** (Feature 3), not the raw map viewport. This keeps the list, the numbering, and the export all scoped to the same set of properties at all times. Per-property **show/hide** toggles (eye icon) exclude hidden rows from the map, visible list count, numbering, and export; hidden in-bounds rows appear in a separate Hidden section so they can be restored. Visibility is session-scoped (`usePropertyVisibility`).
 
 **3) Print bounds layer**
 A fixed-aspect-ratio rectangle overlaid on the map, independent of browser window shape. Letter (8.5×11) and Tabloid (11×17) toggle changes the rectangle's aspect ratio, not the map viewport. User pans/zooms the map under it; the box stays centered and fixed-ratio. Box must recompute its on-screen pixel dimensions on window resize to preserve the true target ratio — not fixed CSS dimensions. This box is the single source of truth for "what's in scope" for list, numbering, and export.
@@ -56,7 +56,7 @@ Disabled during `dragstart`→`dragend`/`zoomstart`→`zoomend`. Enabled on `idl
 4. If any property in scope already has a manually-adjusted `list_order` (i.e., re-running after hand edits), **warn before overwrite** — this action wipes manual adjustments.
 
 **5) Manual reorder in property list**
-Drag-to-reorder via @dnd-kit, writes to `list_order`, **and overwrites `current_number` to match new position.** `list_order` is the single source of truth for final numbering — resolves the two-mechanism conflict: bounds-button is a seed/starting point, list order is what actually exports.
+Drag-to-reorder via @dnd-kit, writes to `list_order`, **and overwrites `current_number` to match new position.** `list_order` is the single source of truth for final numbering — resolves the two-mechanism conflict: bounds-button is a seed/starting point, list order is what actually exports. The list panel can also **Export CSV** / **Export XLSX** of the current visible in-bounds rows in list order (`current_number`, `building_name`, `address`, `sale_date`) for use as a print legend in InDesign or similar.
 
 **6) Export**
 Button constructs the PDF:
@@ -65,6 +65,8 @@ Button constructs the PDF:
 Output is a real vector-editable PDF — numbers and points are selectable/editable objects in Acrobat/Illustrator, not a flattened screenshot. Auto-downloads on completion.
 
 **Export resolution:** 300 DPI target (`EXPORT_DPI` in `src/lib/export/exportResolution.ts`). Letter → 2550×3300 px basemap; Tabloid → proportional cap at 4096 px long edge (WebGL canvas limit). Offscreen container CSS dimensions are `targetPx / devicePixelRatio` because Mapbox GL v3 multiplies canvas size by DPR and does not honor a `pixelRatio` constructor option. Vector markers/labels remain fully sharp regardless of basemap DPI.
+
+**Export label text scaling:** POI/building/street `text-size` is multiplied on the offscreen map only (`exportLabelTextScale` ≈ `EXPORT_DPI / 96 / devicePixelRatio`) so basemap labels stay legible at print size. Interactive map label sizes are unchanged; label category on/off toggles remain WYSIWYG.
 
 **Retired paths:** live on-screen canvas crop (`capturePrintBoundsBasemap`) and Mapbox Static Images API (`src/lib/export/staticImage.ts`) — code retained but not used in the live export path. Static Images cannot reproduce runtime label-visibility toggles or other client-side style state.
 
@@ -101,12 +103,7 @@ Re-uploading a CSV/XLSX/GeoJSON no longer always inserts new rows. Each uploaded
 - **No auth** — this build intentionally has no user accounts; the header avatar is static UI chrome.
 - **Mapbox token** must allow the deployment origin in its URL restrictions; the anon Supabase key is public in the bundle (RLS policies govern data access).
 - **Geocoded imports with missing coordinates** still fail validation — rows with blank lat/lng are flagged in preview and cannot be inserted until coordinates are present in the source file.
-- **No per-property visibility toggles** — all loaded properties always appear on the map and in the list when in bounds. See roadmap Phase 10a/10b.
-- **No list/legend export** — property data cannot yet be exported as CSV/XLSX for use as an InDesign print legend. See roadmap Phase 10c.
-- **Data intake has no full-property table** — upload preview only; no inline create/edit of individual records outside a file upload. See roadmap Phase 10b.
 
-## Planned Features (see `property-numbering-app-roadmap.md` Phase 10)
+## Planned Features
 
-1. **Property show/hide toggles** — per-property visibility controls in the list and/or print bounds; hidden properties excluded from map, list, numbering, and export.
-2. **Data intake property table** — full Supabase-backed table of all properties with inline "add row" (no upload required) and per-row show/hide toggles that sync globally to map and list.
-3. **Export property list as CSV/XLSX** — download the current in-bounds list in list order with data columns, for use as a map legend table in InDesign or other print software.
+Phase 10 (show/hide, intake property table, legend CSV/XLSX export, export label scaling, duplicate-address auto-hide) is complete — see `property-numbering-app-roadmap.md`.

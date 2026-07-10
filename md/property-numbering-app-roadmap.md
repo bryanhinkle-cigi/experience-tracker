@@ -82,7 +82,7 @@ Each phase ends in a checkpoint — a concrete, testable state. Don't move to th
 
 **Checkpoint:** Export a bounds box with 10 numbered properties. Resulting PDF matches Letter or Tabloid dimensions exactly. Open in Illustrator — confirm each number is an editable text object, not a raster label. Toggle satellite on and POI labels off before export — PDF basemap matches those choices. Basemap raster is sharp at 300 DPI (Letter) / capped high-res (Tabloid); vector markers/labels remain fully editable.
 
-**Known limitation (as of current build):** map labels (POI names, building names, street names) render at Mapbox's default screen-oriented text sizes on the offscreen high-res map, so they appear **visually small** relative to the 300 DPI basemap when printed or viewed at full zoom. Vector property number labels in the PDF are unaffected. See Phase 10d for a planned fix.
+**Label text scaling:** export applies an export-only `text-size` multiplier (`exportLabelTextScale` / `scaleExportLabelTextSizes`) so POI/building/street labels print at roughly screen-equivalent physical size. Interactive map label sizes are unchanged.
 
 ---
 
@@ -144,42 +144,47 @@ Each phase ends in a checkpoint — a concrete, testable state. Don't move to th
 
 ---
 
-## Phase 10 — Future Features *(not started)*
+## Phase 10 — Future Features *(10a–10e done)*
 
-### 10a — Property show/hide toggles (map + list)
+### 10a — Property show/hide toggles (map + list) ✅
 
-- Show/Hide toggle buttons for individual properties in the property list and/or print-bounds scope
-- Hidden properties are excluded from map markers, the in-bounds list, numbering, and export (or optionally shown dimmed on map but excluded from export — confirm at build time)
-- Toggle state should persist for the session (and optionally to Supabase if a `visible` column is added)
+- Show/Hide toggle buttons on each property list row (eye icon); hidden in-bounds rows move to a **Hidden** section so they can be shown again
+- Hidden properties are excluded from map markers, the visible in-bounds list count, numbering, and export (full pin exclusion — not dimmed)
+- Toggle state is session-scoped via `usePropertyVisibility` + `sessionStorage` (`property-visibility-v1`); not yet persisted to Supabase (shared hook is ready for 10b intake table)
 
 **Checkpoint:** Toggle a property hidden in the list — its map pin disappears, it drops out of the in-bounds list count, and it is omitted from the next PDF export. Toggle back on — pin, list row, and export inclusion restore.
 
-### 10b — Full property table on Data Intake + inline create
+### 10b — Full property table on Data Intake + inline create ✅
 
-- Add a table to the **Data intake** view showing **all** imported/loaded properties (not just the current upload preview)
-- **Add row** button to create a new property record directly in the table — no file upload required
-- Per-row **show/hide** toggle that globally controls visibility on the map and in the property list (shared state with 10a)
-- Inline edit for key fields (address, lat/lng, sale_date, building_name) with validation consistent with file intake
+- Table on the **Data intake** view (`IntakePropertyTable`) listing **all** loaded properties (sorted by address), shown on the upload and done steps alongside the file wizard
+- **Add property** button inserts a draft row — validated with the same `validateRow` rules as file intake, then `bulkInsertProperties`
+- Per-row **show/hide** uses the shared `usePropertyVisibility` state from App (same toggles as the map workspace)
+- **Edit** switches the row to inline inputs for building name, address, lat, lng, sale_date; saves via `updatePropertyRecord` (lat/lng allowed here; match-review path still never proposes lat/lng overwrites)
 
 **Checkpoint:** Open Data intake — full property table loads from Supabase. Click "Add property," fill required fields, save — new row appears in table and as a map pin. Toggle a row hidden — pin and list entry disappear everywhere in the app. Re-upload flow still works alongside the table view.
 
-### 10c — Export property list as CSV/XLSX legend
+### 10c — Export property list as CSV/XLSX legend ✅
 
-- **Export list** button on the property list panel (or export modal)
-- Outputs the current in-bounds list in **current list order** (`list_order` / `current_number`) with data columns: `current_number`, `building_name`, `address`, `sale_date`, and any other useful legend fields
-- Format options: **CSV** and **.xlsx**
+- **Export CSV** / **Export XLSX** buttons on the property list panel (below PDF export)
+- Outputs the current visible in-bounds list in **current list order** via `legendExport.ts` with columns: `current_number`, `building_name`, `address`, `sale_date`
 - Intended use: paste/import into InDesign, Illustrator, or other print software as a **map legend table** alongside the exported PDF
 
 **Checkpoint:** Renumber and manually reorder 5 properties in bounds. Export list as CSV — rows appear in list order with correct numbers and columns. Open XLSX export in Excel — same order and data. Import CSV into a test InDesign table — columns align for legend layout.
 
-### 10d — Export map label text scaling
+### 10d — Export map label text scaling ✅
 
 - **Problem:** high-res offscreen export (Phase 5) preserves label *visibility* (POI / building / street toggles) but not label *legibility* — Mapbox style text sizes are tuned for on-screen viewing, so labels look too small on the 300 DPI exported basemap.
-- **Goal:** exported PDF basemap labels should be readable at print size without requiring post-export editing in Illustrator.
-- **Possible approaches (pick at build time):**
-  - Apply a text-size multiplier to matched label layers on the offscreen export map only (via `setLayoutProperty('text-size', …)` on POI/building/road symbol layers)
-  - Fork or override the export style with larger `text-size` stops for symbol layers
-  - Export-time zoom/camera adjustment paired with text-size compensation so geographic framing stays correct
+- **Implemented:** export-only text-size multiplier via `scaleExportLabelTextSizes` in `src/lib/export/exportLabelScale.ts`, applied in `captureExportBasemap`. Scale factor is `EXPORT_DPI / 96 / devicePixelRatio` so printed label size stays stable across retina/non-retina. Wraps numeric and expression `text-size` values; skips layers without text-size.
 - Must remain WYSIWYG with respect to which label categories are on/off; only *scale*, not *selection*, changes for export.
 
 **Checkpoint:** Export Letter PDF with all three label categories on — POI, building, and street names are legible when the PDF is viewed at 100% on a typical monitor and when printed at Letter size. Toggle street names off — export still omits them. On-screen interactive map label sizes are unchanged.
+
+### 10e — Duplicate address auto-hide on upload ✅
+
+- Buildings can sell more than once: **same address, different sale dates** are valid distinct records (not deleted)
+- **On file upload/import completion**, scan all loaded properties for exact normalized address duplicates (`findSupersededDuplicateIds`)
+- Keep the row with the **most recent `sale_date`** visible; **auto-hide** older sales via session visibility (`hideMany`) — same hide path as manual show/hide (excluded from map, list numbering, and export)
+- Hidden duplicates remain in the Data intake **All properties** table (and workspace Hidden section) with a **yellow row shade** to mark “hidden as duplicate”
+- User can still unhide a duplicate manually; yellow clears while it is shown. Inline table edits do **not** re-apply auto-hide (only the upload/import path does)
+
+**Checkpoint:** Upload a file (or re-upload) that includes two rows for the same address with different sale dates — both rows exist in the intake table; the older sale is hidden and shaded yellow; the newest sale stays visible on the map/list. Unhide the older row — yellow clears and the pin can appear again. Export/renumber ignore still-hidden duplicates.

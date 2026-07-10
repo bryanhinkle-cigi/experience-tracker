@@ -9,16 +9,31 @@ import { UploadStep } from './UploadStep';
 import { PreviewStep } from './PreviewStep';
 import { MatchReviewStep, type MatchDecision } from './MatchReviewStep';
 import { DoneStep } from './DoneStep';
+import { IntakePropertyTable } from './IntakePropertyTable';
 
 type IntakeStep = 'upload' | 'preview' | 'review' | 'done';
 
 interface DataIntakeScreenProps {
   existingProperties: PropertyRow[];
-  onImported: () => void;
+  hiddenIds: ReadonlySet<string>;
+  supersededDuplicateIds: ReadonlySet<string>;
+  onToggleHidden: (id: string) => void;
+  /** Refresh property list after inline table create/edit (no duplicate auto-hide). */
+  onPropertiesChanged: () => void | Promise<void>;
+  /** After file import: refresh and auto-hide superseded address duplicates. */
+  onImported: () => void | Promise<void>;
   onGoToWorkspace: () => void;
 }
 
-export function DataIntakeScreen({ existingProperties, onImported, onGoToWorkspace }: DataIntakeScreenProps) {
+export function DataIntakeScreen({
+  existingProperties,
+  hiddenIds,
+  supersededDuplicateIds,
+  onToggleHidden,
+  onPropertiesChanged,
+  onImported,
+  onGoToWorkspace,
+}: DataIntakeScreenProps) {
   const [step, setStep] = useState<IntakeStep>('upload');
   const [fileName, setFileName] = useState('');
   const [rows, setRows] = useState<ValidatedRow[]>([]);
@@ -131,55 +146,76 @@ export function DataIntakeScreen({ existingProperties, onImported, onGoToWorkspa
     }
   }
 
+  const showPropertyTable = step === 'upload' || step === 'done';
+
   return (
-    <div style={{ flex: 1, maxWidth: 980, width: '100%', margin: '0 auto', padding: '40px 32px 64px' }}>
-      <div style={{ marginBottom: 28 }}>
-        <div className="type-label" style={{ color: 'var(--color-medium-blue)', marginBottom: 6 }}>
-          Admin intake
+    <div
+      style={{
+        flex: 1,
+        minHeight: 0,
+        overflowY: 'auto',
+        width: '100%',
+      }}
+    >
+      <div style={{ maxWidth: 980, width: '100%', margin: '0 auto', padding: '40px 32px 64px' }}>
+        <div style={{ marginBottom: 28 }}>
+          <div className="type-label" style={{ color: 'var(--color-medium-blue)', marginBottom: 6 }}>
+            Admin intake
+          </div>
+          <h1 style={{ margin: '0 0 6px' }}>Load property dataset</h1>
+          <p style={{ margin: 0, maxWidth: 640, color: 'var(--color-fg)' }}>
+            Manage all loaded properties below, or upload a CSV, XLSX, or GeoJSON file.
+            Every row needs an address, coordinates, and sale date — building name is optional.
+            Sale date is required for auto-numbering. Rows matching an existing property by
+            address are reviewed before anything is overwritten.
+          </p>
         </div>
-        <h1 style={{ margin: '0 0 6px' }}>Load property dataset</h1>
-        <p style={{ margin: 0, maxWidth: 640, color: 'var(--color-fg)' }}>
-          Upload a CSV, XLSX, or GeoJSON file of properties. Every row needs an address,
-          coordinates, and sale date before it can be added — building name is optional.
-          Sale date is required for auto-numbering. Rows matching an existing property by
-          address are reviewed before anything is overwritten.
-        </p>
+
+        {showPropertyTable && (
+          <IntakePropertyTable
+            properties={existingProperties}
+            hiddenIds={hiddenIds}
+            supersededDuplicateIds={supersededDuplicateIds}
+            onToggleHidden={onToggleHidden}
+            onChanged={onPropertiesChanged}
+          />
+        )}
+
+        {error && (
+          <div
+            style={{
+              background: 'rgba(237,27,52,0.08)',
+              color: 'var(--color-red)',
+              borderRadius: 'var(--radius-md)',
+              padding: '10px 16px',
+              marginBottom: 16,
+              fontSize: 13,
+            }}
+          >
+            {error}
+          </div>
+        )}
+
+        {step === 'upload' && <UploadStep onFileSelected={handleFile} onLoadSample={handleLoadSample} />}
+        {step === 'preview' && (
+          <PreviewStep
+            fileName={fileName}
+            rows={rows}
+            onRemoveInvalid={handleRemoveInvalid}
+            onConfirmImport={handleConfirmImport}
+          />
+        )}
+        {step === 'review' && (
+          <MatchReviewStep
+            matches={pendingMatches}
+            newRowCount={pendingNewRows.length}
+            onConfirm={handleReviewConfirm}
+          />
+        )}
+        {step === 'done' && (
+          <DoneStep count={resultCounts.added} updatedCount={resultCounts.updated} onGoToWorkspace={onGoToWorkspace} />
+        )}
       </div>
-
-      {error && (
-        <div
-          style={{
-            background: 'rgba(237,27,52,0.08)',
-            color: 'var(--color-red)',
-            borderRadius: 'var(--radius-md)',
-            padding: '10px 16px',
-            marginBottom: 16,
-            fontSize: 13,
-          }}
-        >
-          {error}
-        </div>
-      )}
-
-      {step === 'upload' && <UploadStep onFileSelected={handleFile} onLoadSample={handleLoadSample} />}
-      {step === 'preview' && (
-        <PreviewStep
-          fileName={fileName}
-          rows={rows}
-          onRemoveInvalid={handleRemoveInvalid}
-          onConfirmImport={handleConfirmImport}
-        />
-      )}
-      {step === 'review' && (
-        <MatchReviewStep
-          matches={pendingMatches}
-          newRowCount={pendingNewRows.length}
-          onConfirm={handleReviewConfirm}
-        />
-      )}
-      {step === 'done' && (
-        <DoneStep count={resultCounts.added} updatedCount={resultCounts.updated} onGoToWorkspace={onGoToWorkspace} />
-      )}
     </div>
   );
 }

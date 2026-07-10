@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMapInstance } from '../../hooks/useMapInstance';
 import { useBoundsBox } from '../../hooks/useBoundsBox';
 import { useInBoundsProperties } from '../../hooks/useInBoundsProperties';
@@ -9,6 +9,10 @@ import { geoPolygonToBbox } from '../../lib/geometry/boundsToPolygon';
 import { captureExportBasemap } from '../../lib/export/captureBasemap';
 import { buildExportPdf, downloadPdf, exportErrorMessage } from '../../lib/export/pdfExport';
 import { MAP_STYLE_URLS, type MapStyleMode } from '../../lib/map/mapStyles';
+import {
+  filterVisibleProperties,
+  partitionByVisibility,
+} from '../../lib/properties/visibility';
 import type { PropertyRow } from '../../lib/supabase/types';
 import type { OrderAssignment } from '../../lib/numbering/numbering';
 import { PrintBoundsOverlay } from './PrintBoundsOverlay';
@@ -24,21 +28,38 @@ const DEFAULT_MARKER_COLOR = '#1C54F4'; // --color-medium-blue
 
 interface MapWorkspaceScreenProps {
   properties: PropertyRow[];
+  hiddenIds: ReadonlySet<string>;
+  supersededDuplicateIds: ReadonlySet<string>;
+  onToggleHidden: (id: string) => void;
   onApplyOrderUpdates: (updates: OrderAssignment[]) => void;
 }
 
 type ExportState = { status: 'closed' } | { status: 'running'; step: ExportStep } | { status: 'done' } | { status: 'error'; message: string };
 
-export function MapWorkspaceScreen({ properties, onApplyOrderUpdates }: MapWorkspaceScreenProps) {
+export function MapWorkspaceScreen({
+  properties,
+  hiddenIds,
+  supersededDuplicateIds,
+  onToggleHidden,
+  onApplyOrderUpdates,
+}: MapWorkspaceScreenProps) {
   const { containerRef, map, isInteracting } = useMapInstance();
   const { paper, rect, boundsPolygon, setPaperSize, onBoxMouseDown, onResizeMouseDown } = useBoundsBox(
     containerRef,
     map,
   );
+  const visibleProperties = useMemo(
+    () => filterVisibleProperties(properties, hiddenIds),
+    [properties, hiddenIds],
+  );
   const inBoundsRows = useInBoundsProperties(properties, boundsPolygon);
-  const inBoundsIds = new Set(inBoundsRows.map((r) => r.id));
+  const { visible: visibleInBounds, hidden: hiddenInBounds } = useMemo(
+    () => partitionByVisibility(inBoundsRows, hiddenIds),
+    [inBoundsRows, hiddenIds],
+  );
+  const inBoundsIds = useMemo(() => new Set(visibleInBounds.map((r) => r.id)), [visibleInBounds]);
   const { listRows, showConfirm, onRenumberClick, confirmRenumber, cancelRenumber, onDragEnd } = useRenumber(
-    inBoundsRows,
+    visibleInBounds,
     onApplyOrderUpdates,
   );
   const [exportState, setExportState] = useState<ExportState>({ status: 'closed' });
@@ -91,7 +112,7 @@ export function MapWorkspaceScreen({ properties, onApplyOrderUpdates }: MapWorks
         <div ref={containerRef} style={{ position: 'absolute', inset: 0 }} />
         <PropertyMarkersLayer
           map={map}
-          properties={properties}
+          properties={visibleProperties}
           inBoundsIds={inBoundsIds}
           markerSize={markerSize}
           markerColor={markerColor}
@@ -119,14 +140,21 @@ export function MapWorkspaceScreen({ properties, onApplyOrderUpdates }: MapWorks
           />
           <RenumberButton
             disabled={isInteracting}
-            hasManualOverride={hasManualOverride(inBoundsRows)}
+            hasManualOverride={hasManualOverride(visibleInBounds)}
             onClick={onRenumberClick}
           />
         </div>
         <PanningIndicator visible={isInteracting} />
       </div>
 
-      <PropertyListPanel listRows={listRows} onDragEnd={onDragEnd} onExportClick={handleExportClick} />
+      <PropertyListPanel
+        listRows={listRows}
+        hiddenInBoundsRows={hiddenInBounds}
+        supersededDuplicateIds={supersededDuplicateIds}
+        onDragEnd={onDragEnd}
+        onToggleHidden={onToggleHidden}
+        onExportClick={handleExportClick}
+      />
 
       {showConfirm && <RenumberConfirmModal onCancel={cancelRenumber} onConfirm={confirmRenumber} />}
 

@@ -4,6 +4,7 @@ import { config } from '../../config/env';
 import type { GeoBbox, PaperSize, ScreenRect } from '../../types/domain';
 import { applyLabelVisibility, type LabelVisibility } from '../map/applyLabelVisibility';
 import { setPropertyMarkersVisible } from '../map/propertyMarkerLayers';
+import { exportLabelTextScale, scaleExportLabelTextSizes } from './exportLabelScale';
 import { exportPixelDimensions } from './exportResolution';
 
 export function printBoundsCropRect(rect: ScreenRect, pixelRatio: number): ScreenRect {
@@ -103,6 +104,7 @@ export async function captureExportBasemap(params: CaptureExportBasemapParams): 
     });
 
     applyLabelVisibility(map, labelVisibility);
+    scaleExportLabelTextSizes(map, exportLabelTextScale(dpr));
     map.fitBounds(
       [
         [bbox.minLng, bbox.minLat],
