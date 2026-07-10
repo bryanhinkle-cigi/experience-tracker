@@ -6,7 +6,7 @@ import { useRenumber } from '../../hooks/useRenumber';
 import { useMapLabelVisibility } from '../../hooks/useMapLabelVisibility';
 import { hasManualOverride } from '../../lib/numbering/numbering';
 import { geoPolygonToBbox } from '../../lib/geometry/boundsToPolygon';
-import { capturePrintBoundsBasemap } from '../../lib/export/captureBasemap';
+import { captureExportBasemap } from '../../lib/export/captureBasemap';
 import { buildExportPdf, downloadPdf, exportErrorMessage } from '../../lib/export/pdfExport';
 import { MAP_STYLE_URLS, type MapStyleMode } from '../../lib/map/mapStyles';
 import type { PropertyRow } from '../../lib/supabase/types';
@@ -65,7 +65,12 @@ export function MapWorkspaceScreen({ properties, onApplyOrderUpdates }: MapWorks
     setExportState({ status: 'running', step: 'fetching-basemap' });
     try {
       const bbox = geoPolygonToBbox(boundsPolygon);
-      const basemapBytes = await capturePrintBoundsBasemap(map, rect);
+      const basemapBytes = await captureExportBasemap({
+        bbox,
+        paper,
+        styleUrl: MAP_STYLE_URLS[mapStyleMode],
+        labelVisibility,
+      });
       const bytes = await buildExportPdf({
         properties: listRows.map((r) => ({ lat: r.lat, lng: r.lng, current_number: r.current_number ?? 0 })),
         bbox,

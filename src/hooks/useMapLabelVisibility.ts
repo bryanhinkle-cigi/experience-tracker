@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Map as MapboxMap } from 'mapbox-gl';
-import { findLabelLayerIds, type LabelCategory } from '../lib/map/labelLayers';
+import {
+  applyLabelVisibility,
+  DEFAULT_LABEL_VISIBILITY,
+  type LabelVisibility,
+} from '../lib/map/applyLabelVisibility';
 
-export type LabelVisibility = Record<LabelCategory, boolean>;
-
-const DEFAULT_VISIBILITY: LabelVisibility = { poi: true, building: true, road: true };
+export type { LabelVisibility };
 
 /**
  * Controls visibility of POI / building / street label layers independently.
@@ -13,20 +15,13 @@ const DEFAULT_VISIBILITY: LabelVisibility = { poi: true, building: true, road: t
  * the matched layer ids for a given category can differ between styles.
  */
 export function useMapLabelVisibility(map: MapboxMap | null) {
-  const [visibility, setVisibility] = useState<LabelVisibility>(DEFAULT_VISIBILITY);
+  const [visibility, setVisibility] = useState<LabelVisibility>(DEFAULT_LABEL_VISIBILITY);
   const visibilityRef = useRef(visibility);
   visibilityRef.current = visibility;
 
   const applyAll = useCallback(() => {
     if (!map) return;
-    (Object.keys(visibilityRef.current) as LabelCategory[]).forEach((category) => {
-      const visible = visibilityRef.current[category];
-      for (const layerId of findLabelLayerIds(map, category)) {
-        if (map.getLayer(layerId)) {
-          map.setLayoutProperty(layerId, 'visibility', visible ? 'visible' : 'none');
-        }
-      }
-    });
+    applyLabelVisibility(map, visibilityRef.current);
   }, [map]);
 
   useEffect(() => {
@@ -43,7 +38,7 @@ export function useMapLabelVisibility(map: MapboxMap | null) {
     applyAll();
   }, [applyAll, visibility]);
 
-  const setCategoryVisible = useCallback((category: LabelCategory, visible: boolean) => {
+  const setCategoryVisible = useCallback((category: keyof LabelVisibility, visible: boolean) => {
     setVisibility((prev) => ({ ...prev, [category]: visible }));
   }, []);
 

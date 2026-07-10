@@ -70,15 +70,19 @@ Each phase ends in a checkpoint — a concrete, testable state. Don't move to th
 ## Phase 5 — Export
 
 - "Export" button, disabled if bounds box is empty
-- **WYSIWYG basemap capture:** crop the live Mapbox canvas to the print-bounds overlay rect (after briefly hiding the property-marker layers so they aren't duplicated in the raster). This preserves the user's current satellite/standard basemap choice and map-label visibility toggles — something the Static Images API cannot do from a bare style URL alone.
+- **High-res WYSIWYG basemap render:** spin up a hidden offscreen Mapbox map at print resolution (`captureExportBasemap` in `src/lib/export/captureBasemap.ts`), fitted to the print-bounds geographic bbox. Applies the user's current basemap style (satellite/standard) and map-label visibility toggles via shared `applyLabelVisibility` — preserving on-screen style state that the Static Images API cannot reproduce from a bare style URL alone.
+- **Export resolution:** 300 DPI target via `exportPixelDimensions` (`src/lib/export/exportResolution.ts`) — Letter 2550×3300 px, Tabloid capped at 4096 px long edge (WebGL limit). Offscreen container CSS size is `targetPx / devicePixelRatio` because Mapbox GL v3 sizes the canvas as CSS × DPR (no working `pixelRatio` constructor option).
+- Property-marker layers are not drawn on the offscreen map (only basemap + map labels); numbered pins are drawn as vector objects in the PDF.
 - pdf-lib: construct PDF sized to Letter/Tabloid dimensions, place captured basemap image
 - pdf-lib: draw vector text objects for each number label (Helvetica Bold standard font), vector point markers, positioned via projected lat/lng → PDF coordinate math
 - Auto-download on completion
 - Verify output PDF: numbers/points are selectable/editable text objects (open in Acrobat or Illustrator, confirm not flattened)
 
-**Known limitation (as of current build):** basemap resolution is tied to the on-screen print-bounds box size × device pixel ratio (typically ~700–1000 px on the long edge at default box scale), then upscaled to the PDF page. Vector markers/labels remain sharp; the basemap may look soft when printed or zoomed in Illustrator. The original Static Images API path (~1280 px base, `@2x` → ~2560 px) was retired in favor of WYSIWYG fidelity.
+**Retired path:** live canvas crop (`capturePrintBoundsBasemap`, same file) and Mapbox Static Images API (`src/lib/export/staticImage.ts`) — retained in codebase but not used in the live export path.
 
-**Checkpoint:** Export a bounds box with 10 numbered properties. Resulting PDF matches Letter or Tabloid dimensions exactly. Open in Illustrator — confirm each number is an editable text object, not a raster label. Toggle satellite on and POI labels off before export — PDF basemap matches those choices. Basemap is acceptably sharp on screen; may show tile pixelation at high print zoom (known limitation above).
+**Checkpoint:** Export a bounds box with 10 numbered properties. Resulting PDF matches Letter or Tabloid dimensions exactly. Open in Illustrator — confirm each number is an editable text object, not a raster label. Toggle satellite on and POI labels off before export — PDF basemap matches those choices. Basemap raster is sharp at 300 DPI (Letter) / capped high-res (Tabloid); vector markers/labels remain fully editable.
+
+**Known limitation (as of current build):** map labels (POI names, building names, street names) render at Mapbox's default screen-oriented text sizes on the offscreen high-res map, so they appear **visually small** relative to the 300 DPI basemap when printed or viewed at full zoom. Vector property number labels in the PDF are unaffected. See Phase 10d for a planned fix.
 
 ---
 
@@ -135,8 +139,47 @@ Each phase ends in a checkpoint — a concrete, testable state. Don't move to th
 ## Open Items to Confirm Before Phase 1 Start
 
 - Sample CSV/XLSX/GeoJSON test files with intentional bad rows — need these built for Phase 1 checkpoint testing
-- ~~Mapbox Static Images API rate limits/cost at expected export volume — worth checking before Phase 5~~ *(retired: export now uses canvas capture; Static Images API code remains in `src/lib/export/staticImage.ts` but is not used in the live export path)*
+- ~~Mapbox Static Images API rate limits/cost at expected export volume — worth checking before Phase 5~~ *(retired: export uses offscreen high-res render; Static Images API code remains in `src/lib/export/staticImage.ts` but is not used in the live export path)*
+- ~~High-res + WYSIWYG basemap~~ *(resolved: offscreen Mapbox render at 300 DPI with style/label matching — see Phase 5)*
 
-## Open Items — Export Quality
+---
 
-- **High-res + WYSIWYG basemap:** current canvas capture trades print resolution for fidelity to on-screen style state (satellite toggle, label visibility). A future improvement could temporarily boost map pixel ratio during export, or combine Static Images API with a server-side style fork — neither is implemented yet.
+## Phase 10 — Future Features *(not started)*
+
+### 10a — Property show/hide toggles (map + list)
+
+- Show/Hide toggle buttons for individual properties in the property list and/or print-bounds scope
+- Hidden properties are excluded from map markers, the in-bounds list, numbering, and export (or optionally shown dimmed on map but excluded from export — confirm at build time)
+- Toggle state should persist for the session (and optionally to Supabase if a `visible` column is added)
+
+**Checkpoint:** Toggle a property hidden in the list — its map pin disappears, it drops out of the in-bounds list count, and it is omitted from the next PDF export. Toggle back on — pin, list row, and export inclusion restore.
+
+### 10b — Full property table on Data Intake + inline create
+
+- Add a table to the **Data intake** view showing **all** imported/loaded properties (not just the current upload preview)
+- **Add row** button to create a new property record directly in the table — no file upload required
+- Per-row **show/hide** toggle that globally controls visibility on the map and in the property list (shared state with 10a)
+- Inline edit for key fields (address, lat/lng, sale_date, building_name) with validation consistent with file intake
+
+**Checkpoint:** Open Data intake — full property table loads from Supabase. Click "Add property," fill required fields, save — new row appears in table and as a map pin. Toggle a row hidden — pin and list entry disappear everywhere in the app. Re-upload flow still works alongside the table view.
+
+### 10c — Export property list as CSV/XLSX legend
+
+- **Export list** button on the property list panel (or export modal)
+- Outputs the current in-bounds list in **current list order** (`list_order` / `current_number`) with data columns: `current_number`, `building_name`, `address`, `sale_date`, and any other useful legend fields
+- Format options: **CSV** and **.xlsx**
+- Intended use: paste/import into InDesign, Illustrator, or other print software as a **map legend table** alongside the exported PDF
+
+**Checkpoint:** Renumber and manually reorder 5 properties in bounds. Export list as CSV — rows appear in list order with correct numbers and columns. Open XLSX export in Excel — same order and data. Import CSV into a test InDesign table — columns align for legend layout.
+
+### 10d — Export map label text scaling
+
+- **Problem:** high-res offscreen export (Phase 5) preserves label *visibility* (POI / building / street toggles) but not label *legibility* — Mapbox style text sizes are tuned for on-screen viewing, so labels look too small on the 300 DPI exported basemap.
+- **Goal:** exported PDF basemap labels should be readable at print size without requiring post-export editing in Illustrator.
+- **Possible approaches (pick at build time):**
+  - Apply a text-size multiplier to matched label layers on the offscreen export map only (via `setLayoutProperty('text-size', …)` on POI/building/road symbol layers)
+  - Fork or override the export style with larger `text-size` stops for symbol layers
+  - Export-time zoom/camera adjustment paired with text-size compensation so geographic framing stays correct
+- Must remain WYSIWYG with respect to which label categories are on/off; only *scale*, not *selection*, changes for export.
+
+**Checkpoint:** Export Letter PDF with all three label categories on — POI, building, and street names are legible when the PDF is viewed at 100% on a typical monitor and when printed at Letter size. Toggle street names off — export still omits them. On-screen interactive map label sizes are unchanged.
