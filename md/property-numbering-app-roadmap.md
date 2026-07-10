@@ -89,8 +89,10 @@ Each phase ends in a checkpoint — a concrete, testable state. Don't move to th
 - Re-export after edits: confirm exporting twice in a row with a manual reorder in between produces updated PDF, not cached
 - Large dataset performance check: bounds box with 100+ properties — renumber and export still responsive
 - Cross-browser check (Chrome/Safari/Firefox) on bounds box resize behavior specifically, since it's the most layout-fragile piece
+- **Property list scroll stability:** app shell locked to `100vh` with `overflow: hidden`; list panel scroll area uses `min-height: 0` so long in-bounds lists scroll internally instead of growing the page (which previously caused layout thrashing via body scrollbar ↔ map resize ↔ bounds recalc feedback loop)
+- **Map resize sync:** `ResizeObserver` on the map container calls `map.resize()` so the GL canvas stays aligned when layout changes
 
-**Checkpoint:** Full run-through: import a real dataset, pan to a city block, toggle Letter→Tabloid, renumber, manually reorder 3 properties, export, re-export after another manual change, confirm both PDFs are correct and reflect their respective states.
+**Checkpoint:** Full run-through: import a real dataset, pan to a city block, toggle Letter→Tabloid, renumber, manually reorder 3 properties, export, re-export after another manual change, confirm both PDFs are correct and reflect their respective states. Load 20+ properties into bounds — list scrolls smoothly with no page-level jitter.
 
 ---
 
@@ -102,7 +104,7 @@ Each phase ends in a checkpoint — a concrete, testable state. Don't move to th
 - Independent POI names / Building names / Street names visibility toggles, resolved by pattern-matching the live style's layer list rather than hardcoded layer ids
 - All of the above must persist correctly across a basemap style switch (custom layers and label visibility both get wiped by `setStyle()` and need to be re-applied on `style.load`)
 
-**Checkpoint:** Toggle satellite on/off — map pins, their current size/color, and any label visibility choices are unaffected. Drag the marker-size slider — pins resize smoothly with no flicker. Set a custom marker color — in-bounds pins show the chosen color, out-of-bounds pins stay a fixed muted color. Toggle each label category off individually — only that category's labels disappear (e.g. toggling street names off leaves POI/neighborhood labels visible, toggling it back on restores them).
+**Checkpoint:** Toggle satellite on/off — map pins, their current size/color, and any label visibility choices are unaffected. Drag the marker-size slider — pins resize smoothly with no flicker. Set a custom marker color — in-bounds pins show the chosen color, out-of-bounds pins stay a fixed muted color. Toggle each label category off individually — only that category's labels disappear (e.g. toggling street names off leaves POI/neighborhood labels visible, toggling it back on restores them). Export with labels off — PDF basemap matches the on-screen label state.
 
 ---
 
@@ -118,7 +120,23 @@ Each phase ends in a checkpoint — a concrete, testable state. Don't move to th
 
 ---
 
+## Phase 9 — Deployment *(added post-launch)*
+
+- **Hosting:** static SPA deployed to **GitHub Pages** via GitHub Actions (`.github/workflows/deploy.yml`)
+- **Base path:** `vite.config.ts` sets `base: '/experience-tracker/'` for project-site URL (`https://<user>.github.io/experience-tracker/`)
+- **Build-time env:** `VITE_*` secrets injected in the Actions workflow (Mapbox token, Supabase URL/anon key, optional style URL and default map center). These are baked into the JS bundle at build — not read at runtime on the server.
+- **Supabase:** hosted separately; run `supabase/migrations/0001_create_properties.sql` against the project before first use
+- **Mapbox token:** restrict allowed URLs to the GitHub Pages origin (and `localhost` for dev)
+
+**Checkpoint:** Push to `main` → Actions build succeeds → app loads at the Pages URL without the config-gate error screen. Map tiles load (token URL restriction correct). Import, renumber, and export all work against production Supabase.
+
+---
+
 ## Open Items to Confirm Before Phase 1 Start
 
 - Sample CSV/XLSX/GeoJSON test files with intentional bad rows — need these built for Phase 1 checkpoint testing
-- Mapbox Static Images API rate limits/cost at expected export volume — worth checking before Phase 5
+- ~~Mapbox Static Images API rate limits/cost at expected export volume — worth checking before Phase 5~~ *(retired: export now uses canvas capture; Static Images API code remains in `src/lib/export/staticImage.ts` but is not used in the live export path)*
+
+## Open Items — Export Quality
+
+- **High-res + WYSIWYG basemap:** current canvas capture trades print resolution for fidelity to on-screen style state (satellite toggle, label visibility). A future improvement could temporarily boost map pixel ratio during export, or combine Static Images API with a server-side style fork — neither is implemented yet.
