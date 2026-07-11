@@ -7,7 +7,6 @@ import {
   validatePropertyDraft,
   type PropertyDraftFields,
 } from '../../lib/properties/propertyDraft';
-import { isDuplicateHidden } from '../../lib/properties/duplicateAddresses';
 import { bulkInsertProperties, updatePropertyRecord } from '../../lib/supabase/properties';
 import type { PropertyRow } from '../../lib/supabase/types';
 
@@ -242,7 +241,7 @@ export function IntakePropertyTable({
             )}
             {sorted.map((row, i) => {
               const isHidden = hiddenIds.has(row.id);
-              const duplicateHidden = isDuplicateHidden(row.id, hiddenIds, supersededDuplicateIds);
+              const isSupersededDuplicate = supersededDuplicateIds.has(row.id);
               const isEditing = editingId === row.id;
               if (isEditing) {
                 return (
@@ -258,14 +257,14 @@ export function IntakePropertyTable({
                 );
               }
               const rowStyle: CSSProperties = {
-                background: duplicateHidden
+                background: isSupersededDuplicate
                   ? 'rgba(255, 212, 0, 0.28)'
                   : isHidden
                     ? 'var(--color-bg-subtle)'
                     : i % 2
                       ? 'rgba(219,229,255,0.3)'
                       : undefined,
-                opacity: isHidden && !duplicateHidden ? 0.72 : 1,
+                opacity: isHidden && !isSupersededDuplicate ? 0.72 : 1,
               };
               const tdStyle: CSSProperties = {
                 padding: '8px 12px',
@@ -274,7 +273,15 @@ export function IntakePropertyTable({
                 verticalAlign: 'middle',
               };
               return (
-                <tr key={row.id} style={rowStyle} title={duplicateHidden ? 'Hidden as older duplicate sale at this address' : undefined}>
+                <tr
+                  key={row.id}
+                  style={rowStyle}
+                  title={
+                    isSupersededDuplicate
+                      ? 'Older sale at this address — a more recent sale exists'
+                      : undefined
+                  }
+                >
                   <td style={tdStyle}>
                     <VisibilityToggle hidden={isHidden} onClick={() => onToggleHidden(row.id)} />
                   </td>

@@ -184,7 +184,7 @@ Each phase ends in a checkpoint — a concrete, testable state. Don't move to th
 - Buildings can sell more than once: **same address, different sale dates** are valid distinct records (not deleted)
 - **On file upload/import completion**, scan all loaded properties for exact normalized address duplicates (`findSupersededDuplicateIds`)
 - Keep the row with the **most recent `sale_date`** visible; **auto-hide** older sales via session visibility (`hideMany`) — same hide path as manual show/hide (excluded from map, list numbering, and export)
-- Hidden duplicates remain in the Data intake **All properties** table (and workspace Hidden section) with a **yellow row shade** to mark “hidden as duplicate”
-- User can still unhide a duplicate manually; yellow clears while it is shown. Inline table edits do **not** re-apply auto-hide (only the upload/import path does)
+- Hidden duplicates remain in the Data intake **All properties** table (and workspace Hidden section). The intake table **always shades superseded duplicate rows yellow** (whether currently hidden or shown) so already-loaded resales are visible at a glance; workspace Hidden rows use the same yellow when they are superseded duplicates
+- User can still unhide a duplicate manually. Inline table edits do **not** re-apply auto-hide (only the upload/import path does)
 
-**Checkpoint:** Upload a file (or re-upload) that includes two rows for the same address with different sale dates — both rows exist in the intake table; the older sale is hidden and shaded yellow; the newest sale stays visible on the map/list. Unhide the older row — yellow clears and the pin can appear again. Export/renumber ignore still-hidden duplicates.
+**Checkpoint:** Open Data intake with existing resales already in Supabase — older sales at the same address are shaded yellow in the table even before a new upload. Upload/re-upload with two sale dates for one address — both rows exist; older sales are auto-hidden and yellow; newest stays visible on the map/list. Unhide an older row — it stays yellow in the intake table and can appear on the map again. Export/renumber ignore still-hidden duplicates.

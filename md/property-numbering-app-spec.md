@@ -34,7 +34,7 @@ Map-based tool for numbering properties (1–XX) within a print-ready area, edit
 ## Feature Breakdown
 
 **1) Admin intake (CSV/XLSX/GeoJSON)**
-Upload → parse client-side → validate required fields: **address, lat, lng, sale_date** (`building_name` is optional) → preview table with row-level errors → confirm (or match-review on re-upload) → bulk insert to Supabase. The Data intake view also shows an **All properties** table (`IntakePropertyTable`) of every loaded record with inline add/edit (same validation rules) and per-row show/hide shared with the map workspace. **Duplicate addresses** (same normalized address, different sale dates — resales) are kept as separate rows; on import completion, older sales are auto-hidden (not deleted) and shaded yellow in the table, leaving the most recent sale visible.
+Upload → parse client-side → validate required fields: **address, lat, lng, sale_date** (`building_name` is optional) → preview table with row-level errors → confirm (or match-review on re-upload) → bulk insert to Supabase. The Data intake view also shows an **All properties** table (`IntakePropertyTable`) of every loaded record with inline add/edit (same validation rules) and per-row show/hide shared with the map workspace. **Duplicate addresses** (same normalized address, different sale dates — resales) are kept as separate rows; on import completion, older sales are auto-hidden (not deleted), leaving the most recent sale visible. The intake table **always highlights superseded (older) duplicate rows in yellow**, whether hidden or shown, including for data already loaded before this behavior existed.
 
 Parser notes:
 - GeoJSON path reads Point features, pulling `building_name`/`name`, `address`, and `sale_date` from feature properties.
